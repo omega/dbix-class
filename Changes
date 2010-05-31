@@ -4,10 +4,16 @@ Revision history for DBIx::Class
         - Issue a warning when DateTime objects are passed to ->search
 
     * Fixes
+        - Fix update()/delete() on complex resultsets to no longer fall back
+          to silly row-by-row deletion, construct a massive OR statement
+          instead
         - Fix SkipFirst and FirstSkip limit dialects (Informix and Firebird)
 
     * Misc
         - Codebase is now trailing-whitespace-free
+        - Cleanup of complex resultset update/delete oprations - storage
+          specific code moved back to ResultSet and replaced by checks
+          of storage capabilities
 
 0.08196 2011-11-29 05:35 (UTC)
     * Fixes
