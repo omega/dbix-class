@@ -1,5 +1,9 @@
 Revision history for DBIx::Class
 
+    * New Features / Changes
+        - populate() in void context is now even more efficient by going
+          directly through execute_for_fetch bypassing execute_array
+
     * Fixes
         - Fix SkipFirst and FirstSkip limit dialects (Informix and Firebird)
 
