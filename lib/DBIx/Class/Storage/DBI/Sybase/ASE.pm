@@ -532,7 +532,7 @@ EOF
   if (not $use_bulk_api) {
     my $blob_cols = $self->_remove_blob_cols_array($source, $cols, $data);
 
-# _execute_array uses a txn anyway, but it ends too early in case we need to
+# next::method uses a txn anyway, but it ends too early in case we need to
 # select max(col) to get the identity for inserting blobs.
     ($self, my $guard) = $self->{transaction_depth} == 0 ?
       ($self->_writer_storage, $self->_writer_storage->txn_scope_guard)
@@ -650,11 +650,11 @@ EOF
 
     my @bind = map { [ $source_columns[$_] => $_ ] } (0 .. $#source_columns);
 
-    $self->_execute_array(
-      $source, $sth, \@bind, \@source_columns, \@new_data, sub {
-        $guard->commit
-      }
+    $self->_dbh_execute_for_fetch(
+      $source, $sth, \@bind, \@source_columns, \@new_data
     );
+
+    $guard->commit;
 
     $bulk->_query_end($sql);
   } catch {
@@ -679,15 +679,6 @@ EOF
     $self->_bulk_storage->disconnect;
     $self->throw_exception($exception);
   }
-}
-
-sub _dbh_execute_array {
-  my ($self, $sth, $tuple_status, $cb) = @_;
-
-  my $rv = $self->next::method($sth, $tuple_status);
-  $cb->() if $cb;
-
-  return $rv;
 }
 
 # Make sure blobs are not bound as placeholders, and return any non-empty ones
