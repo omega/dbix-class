@@ -648,13 +648,25 @@ EOF
       }
     );
 
-    my @bind = map { [ $source_columns[$_] => $_ ] } (0 .. $#source_columns);
+    my @binds = map { [ {
+      dbic_colname => $source_columns[$_],
+      _bind_data_slice_idx => $_,
+    }, $_ ] } (0 .. $#source_columns);
 
-    $self->_dbh_execute_for_fetch(
-      $source, $sth, \@bind, \@source_columns, \@new_data
-    );
+    {
+      # $sth->finish does a rollback, disable it
+      no warnings 'redefine';
+      no strict 'refs';
+      local *{ref($sth).'::finish'} = sub {};
+
+      $self->_dbh_execute_for_fetch(
+        $source, $sth, \@binds, \@source_columns, \@new_data
+      );
+    }
 
     $guard->commit;
+
+    $sth->finish;
 
     $bulk->_query_end($sql);
   } catch {
